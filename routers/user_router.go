@@ -12,4 +12,6 @@ func SetUpUserRouters(r *gin.Engine) {
 	r.GET("/hello", user.Hello)
 
 	r.POST("/users", user.CreateUser)
+	r.POST("/users/login", user.UserLogin)
+	r.DELETE(("/users/:id"), user.DeletedUser)
 }
