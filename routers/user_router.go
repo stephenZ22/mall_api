@@ -2,6 +2,7 @@ package routers
 
 import (
 	"MallApi/controllers"
+	"MallApi/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,5 +14,5 @@ func SetUpUserRouters(r *gin.Engine) {
 
 	r.POST("/users", user.CreateUser)
 	r.POST("/users/login", user.UserLogin)
-	r.DELETE(("/users/:id"), user.DeletedUser)
+	r.DELETE(("/users/:id"), middlewares.CheckLogin(), user.DeletedUser)
 }

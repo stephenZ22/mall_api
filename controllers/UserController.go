@@ -102,7 +102,8 @@ func (uc *UserController) DeletedUser(c *gin.Context) {
 	err := db.MainDb.Delete(models.User{}, userId).Error
 
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"msg": "ok"})
+		c.JSON(http.StatusServiceUnavailable, gin.H{"msg": "ok but something wrong"})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"msg": "ok"})
 }
