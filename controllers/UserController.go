@@ -4,7 +4,6 @@ import (
 	"MallApi/db"
 	"MallApi/models"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -61,9 +60,7 @@ func (uc *UserController) UserLogin(c *gin.Context) {
 	claims["exp"] = exTime.Unix()
 
 	secretKey := os.Getenv("SecretKey")
-	log.Println(secretKey)
-	stoken := []byte(secretKey)
-	signedToken, err := token.SignedString(stoken)
+	signedToken, err := token.SignedString([]byte(secretKey))
 
 	if err != nil {
 		fmt.Println(err.Error())
@@ -76,20 +73,20 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 	var newUser models.User
 	err := c.ShouldBindJSON(&newUser)
 	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 
 		return
 	}
 
 	bcryptPasswordByte, err := models.BcryptPassword(newUser.PassWord)
 	if err != nil {
-		c.JSON(400, gin.H{"error": "failed to bcrypt password"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to bcrypt password"})
 	}
 
 	newUser.PassWord = bcryptPasswordByte
 
 	if err := db.MainDb.Omit("UserInfo").Create(&newUser).Error; err != nil {
-		c.JSON(400, gin.H{"error": "failed to create user"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to create user"})
 		return
 	}
 
@@ -99,10 +96,13 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 func (uc *UserController) DeletedUser(c *gin.Context) {
 	// 需要做权限验证
 	userId := c.Param("id")
-	err := db.MainDb.Delete(models.User{}, userId).Error
+	err := db.MainDb.Delete(&models.User{}, userId).Error
 
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"msg": "ok but something wrong"})
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"msg":   "ok but something wrong",
+			"error": err.Error(),
+		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"msg": "ok"})
