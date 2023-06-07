@@ -1,10 +1,15 @@
 package routers
 
-import "github.com/gin-gonic/gin"
+import (
+	"MallApi/middlewares"
+
+	"github.com/gin-gonic/gin"
+)
 
 func RegisterRouters() *gin.Engine {
 
 	r := gin.Default()
+	r.Use(middlewares.Cors())
 
 	SetUpUserRouters(r)
 

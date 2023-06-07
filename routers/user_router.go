@@ -13,6 +13,7 @@ func SetUpUserRouters(r *gin.Engine) {
 	r.GET("/hello", user.Hello)
 
 	r.POST("/users", user.CreateUser)
+	r.GET("/users", user.GetAllUser)
 	r.POST("/users/login", user.UserLogin)
 	r.DELETE(("/users/:id"), middlewares.CheckLogin(), user.DeletedUser)
 }

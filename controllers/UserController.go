@@ -69,6 +69,19 @@ func (uc *UserController) UserLogin(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": signedToken})
 }
 
+func (uc *UserController) GetAllUser(c *gin.Context) {
+	var users []models.User
+
+	err := db.MainDb.Find(&users).Error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+		"data":    users,
+	})
+}
+
 func (uc *UserController) CreateUser(c *gin.Context) {
 	var newUser models.User
 	err := c.ShouldBindJSON(&newUser)
