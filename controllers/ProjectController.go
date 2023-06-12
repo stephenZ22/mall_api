@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mitchellh/mapstructure"
 )
 
 type ProjectController struct{}
@@ -23,8 +22,8 @@ type ProjectInfoJson struct {
 	ID        uint      `gorm:"column:id" json:"id"`
 	StoreID   uint      `gorm:"column:store_id" json:"store_id"`
 	Name      string    `gorm:"column:name" json:"project_name"`
-	Price     uint      `gorm:"type:decimal(9,2);column:price" json:"project_price"`
-	Status    uint      `gorm:"default:0;column:status" json:"project_status"`
+	Price     uint      `gorm:"column:price" json:"project_price"`
+	Status    uint      `gorm:"column:status" json:"project_status"`
 	CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
@@ -50,15 +49,27 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 
 	if err := db.MainDb.Create(&newProject).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"massge": "DB error to create projects",
-			"error":  err.Error(),
+			"message": "DB error to create projects",
+			"error":   err.Error(),
 		})
 
 		return
 	}
+	result := convertProjectRes(newProject)
 
-	pp := ProjectInfoJson{}
-	mapstructure.Decode(newProject, pp)
-	c.JSON(http.StatusOK, pp)
+	c.JSON(http.StatusOK, result)
+}
 
+func convertProjectRes(p models.Project) ProjectInfoJson {
+	pi := ProjectInfoJson{}
+
+	pi.ID = p.ID
+	pi.StoreID = p.StoreId
+	pi.Name = p.Name
+	pi.Price = p.Price
+	pi.Status = p.Status
+	pi.CreatedAt = p.CreatedAt
+	pi.UpdatedAt = p.UpdatedAt
+
+	return pi
 }
