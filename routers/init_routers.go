@@ -12,6 +12,7 @@ func RegisterRouters() *gin.Engine {
 	r.Use(middlewares.Cors())
 
 	SetUpUserRouters(r)
+	SetProjectRouter(r)
 
 	return r
 }
