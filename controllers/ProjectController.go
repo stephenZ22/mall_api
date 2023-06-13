@@ -19,6 +19,12 @@ type CreateProjectJson struct {
 	Status  uint    `gorm:"default:0;column:status" json:"status"`
 }
 
+type UpdateProjectJson struct {
+	Name   string  `gorm:"column:name" json:"name"`
+	Price  float32 `gorm:"type:decimal(9,2);column:price" json:"price"`
+	Status uint    `gorm:"column:status" json:"status"`
+}
+
 type ProjectInfoJson struct {
 	ID        uint      `gorm:"column:id" json:"id"`
 	StoreID   uint      `gorm:"column:store_id" json:"store_id"`
@@ -64,6 +70,64 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+func (pc *ProjectController) DeleteProject(c *gin.Context) {
+	p_id := c.Param("id")
+	if err := db.MainDb.Delete(&models.Project{}, p_id).Error; err != nil {
+		logger.Error("Project Delete Error:", err.Error())
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "project delete error",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":    "ok",
+		"project_id": p_id,
+	})
+}
+
+func (pc *ProjectController) UpdateProject(c *gin.Context) {
+	p_id := c.Param("id")
+
+	var p models.Project
+
+	if err := db.MainDb.First(&p, p_id).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "find project Error",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	var up UpdateProjectJson
+	if err := c.ShouldBindJSON(&up); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "project params Error",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	p.Status = up.Status
+	p.Price = up.Price
+	p.Name = up.Name
+
+	if err := db.MainDb.Save(&p).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "project save Error",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+		"result":  convertProjectRes(p),
+	})
+}
+
 func (pc *ProjectController) GetAllProject(c *gin.Context) {
 	var projects []models.Project
 
@@ -80,6 +144,21 @@ func (pc *ProjectController) GetAllProject(c *gin.Context) {
 	result := convertProjects(projects)
 
 	c.JSON(http.StatusOK, result)
+}
+
+func (pc *ProjectController) GetProjectByID(c *gin.Context) {
+	var p models.Project
+	if err := db.MainDb.First(&p, c.Param("id")).Error; err != nil {
+		logger.Error("Find project error")
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "not found",
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+		"result":  convertProjectRes(p),
+	})
 }
 
 func convertProjects(ps []models.Project) []ProjectInfoJson {
