@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"MallApi/db"
+	"MallApi/logger"
 	"MallApi/models"
 	"net/http"
 	"time"
@@ -39,6 +40,7 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 	newProject.Status = projectJson.Status
 
 	if err != nil {
+		logger.Error("Params error", err.Error)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Params error to create project",
 			"error":   err.Error(),
@@ -48,6 +50,7 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 	}
 
 	if err := db.MainDb.Create(&newProject).Error; err != nil {
+		logger.Error("DB error", err.Error)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "DB error to create projects",
 			"error":   err.Error(),
@@ -55,6 +58,7 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 
 		return
 	}
+
 	result := convertProjectRes(newProject)
 
 	c.JSON(http.StatusOK, result)
