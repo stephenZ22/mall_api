@@ -13,6 +13,7 @@ func RegisterRouters() *gin.Engine {
 
 	SetUpUserRouters(r)
 	SetProjectRouter(r)
+	SetUpStoreRouters(r)
 
 	return r
 }
