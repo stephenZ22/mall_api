@@ -8,6 +8,7 @@ type Store struct {
 	User   User
 
 	Projects []Project
+	Name     string
 	Status   uint
 	StoreNum uint
 }

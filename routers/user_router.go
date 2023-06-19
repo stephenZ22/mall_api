@@ -12,7 +12,7 @@ var user controllers.UserController
 func SetUpUserRouters(r *gin.Engine) {
 	r.GET("/hello", user.Hello)
 
-	r.POST("/users", user.CreateUser)
+	r.POST("/users", middlewares.CheckLogin(), user.CreateUser)
 	r.POST("/users/login", user.UserLogin)
 	r.GET("/users", middlewares.CheckLogin(), user.GetAllUser)
 	r.DELETE(("/users/:id"), middlewares.CheckLogin(), user.DeletedUser)
