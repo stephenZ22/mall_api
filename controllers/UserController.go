@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"MallApi/db"
+	"MallApi/lib"
 	"MallApi/logger"
 	"MallApi/models"
 	"fmt"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -44,15 +44,12 @@ func (uc *UserController) UserLogin(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(user.Password)
-	fmt.Println(loginData.Password)
-
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginData.Password))
-	if err != nil {
-		logger.Error(err.Error())
+	ok := lib.ComparePassword(user.Password, loginData.Password)
+	if ok == false {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"message": "Invalid credentials",
 		})
+
 		return
 	}
 
@@ -68,7 +65,7 @@ func (uc *UserController) UserLogin(c *gin.Context) {
 	signedToken, err := token.SignedString([]byte(secretKey))
 
 	if err != nil {
-		fmt.Println(err.Error())
+		logger.Error(err.Error())
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": signedToken, "message": "ok"})
@@ -100,9 +97,8 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 		return
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
+	hash, err := lib.GenerateUserPassword(body.Password)
 
-	fmt.Println(string(hash))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to bcrypt Password"})
 	}
