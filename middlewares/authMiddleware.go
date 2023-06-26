@@ -46,7 +46,7 @@ func CheckLogin() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("login_name", claims["login_name"])
+		c.Set("email", claims["email"])
 		c.Next()
 	}
 }

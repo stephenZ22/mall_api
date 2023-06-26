@@ -9,9 +9,9 @@ import (
 
 type User struct {
 	gorm.Model
-	UserInfo  UserInfo `json:"-"`
-	LoginName string   `json:"login_name" gorm:"type:varchar(50); unique_index"`
-	PassWord  string   `gorm:"type:varchar(200)"`
+	UserInfo UserInfo `json:"-"`
+	Email    string   `json:"email" gorm:"type:varchar(50); unique"`
+	Password string   `gorm:"type:varchar(200)"`
 
 	Orders []Order
 }

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"MallApi/db"
+	"MallApi/logger"
 	"MallApi/models"
 	"fmt"
 	"net/http"
@@ -18,8 +19,8 @@ type UserController struct{}
 
 func (uc *UserController) UserLogin(c *gin.Context) {
 	var loginData struct {
-		LoginName string `json:"login_name" binding:"required"`
-		PassWord  string `json:"pass_word" binding:"required"`
+		Email    string `json:"email" binding:"required"`
+		Password string `json:"password" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&loginData); err != nil {
@@ -30,10 +31,10 @@ func (uc *UserController) UserLogin(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := db.MainDb.Where("login_name =?", loginData.LoginName).First(&user).Error; err != nil {
+	if err := db.MainDb.Where("email =?", loginData.Email).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Invalid credentials",
+				"error": "email not found ",
 			})
 
 			return
@@ -43,8 +44,12 @@ func (uc *UserController) UserLogin(c *gin.Context) {
 		return
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(user.PassWord), []byte(loginData.PassWord))
+	fmt.Println(user.Password)
+	fmt.Println(loginData.Password)
+
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginData.Password))
 	if err != nil {
+		logger.Error(err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"message": "Invalid credentials",
 		})
@@ -54,7 +59,7 @@ func (uc *UserController) UserLogin(c *gin.Context) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
-	claims["login_name"] = user.LoginName
+	claims["email"] = user.Email
 
 	exTime := time.Now().Add(30 * time.Minute)
 	claims["exp"] = exTime.Unix()
@@ -66,7 +71,7 @@ func (uc *UserController) UserLogin(c *gin.Context) {
 		fmt.Println(err.Error())
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": signedToken})
+	c.JSON(http.StatusOK, gin.H{"token": signedToken, "message": "ok"})
 }
 
 func (uc *UserController) GetAllUser(c *gin.Context) {
@@ -83,26 +88,32 @@ func (uc *UserController) GetAllUser(c *gin.Context) {
 }
 
 func (uc *UserController) CreateUser(c *gin.Context) {
-	var newUser models.User
-	err := c.ShouldBindJSON(&newUser)
+	var body struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	err := c.ShouldBindJSON(&body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 
 		return
 	}
 
-	bcryptPasswordByte, err := models.BcryptPassword(newUser.PassWord)
+	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
+
+	fmt.Println(string(hash))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to bcrypt password"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to bcrypt Password"})
 	}
 
-	newUser.PassWord = bcryptPasswordByte
+	newUser := models.User{Email: body.Email, Password: string(hash)}
 
 	if err := db.MainDb.Omit("UserInfo").Create(&newUser).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to create user"})
 		return
 	}
-
+	fmt.Println(newUser.Password)
 	c.JSON(200, newUser)
 }
 
